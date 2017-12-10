@@ -1,78 +1,35 @@
 
+/*
 
+    This file handles the writing of messages on the LCD Screen.
+
+*/
 
 
 /* ---------- Public Variables -----------*/
-// Buffer where to have the LCD message to display
-char lcdMessage[MAX_MSG_LEN] = "Merry Christmas Ho ho ho";
+char lcdMessage[MAX_MSG_LEN] = "Merry Christmas Ho ho ho";   // Buffer where to have the LCD message to display
 byte lcdMessageLen = 24;
 
-/* -------- Variables ------------*/
+/* -------- Local Variables ------------*/
 unsigned long LCDstartTime;
-byte msgIndex;
-bool LCDblinking;
+byte msgIndex;    // To follow the typing of the message 
+bool LCDblinking; // Alternating, the Title message is sourrounded by STARs
+
+/* ----- State machine vars  ------ */
+byte lcdState = 0, typingState;
+
+
 
 void setupLCD() {
   lcd.begin(COLS, ROWS)  ;
   lcdReset();
 }
 
-
-
-/* ----- State machine vars  ------ */
-byte lcdState = 0, typingState;
-
-
 void lcdReset() {
   lcd.clear();
   LCDstartTime = millis();
   lcdState = 0;
 }
-
-void showLCD() {
-  switch (lcdState) {
-    case 0: // Waiting for pause time
-      if (hasTimePassed (LCDstartTime,  TITLE_BLINK_TIME_MS)) {
-
-        printTitle(LCD_TITLE, sizeof(LCD_TITLE));
-
-        // set the display to automatically scroll:
-        lcd.setCursor(0, 1);
-
-        msgIndex = 0;
-        lcdState = 1;
-        typingState = 0;
-      }
-
-      break;
-    case 1: // Typing
-      switch (typingState) {
-        case 0: // Type a char
-          lcd.write(lcdMessage[msgIndex++]);
-          LCDstartTime = millis();
-          typingState = 1;
-          break;
-        case 1:   // Waiting for pause time
-          if (hasTimePassed (LCDstartTime,  TYPING_SPEED_MS)) {
-            if (msgIndex ==  COLS ) {
-              lcd.autoscroll();
-              lcd.leftToRight();
-            }
-            if (msgIndex < lcdMessageLen) typingState = 0;    //Keep typing
-            else {
-              lcdState = 0;    // Retype
-              LCDstartTime = millis();
-            }
-          }
-          break;
-      }
-
-      break;
-
-  }
-}
-
-
 
 
 void printTitle(char* msg , int len)
@@ -106,4 +63,50 @@ void printTitle(char* msg , int len)
   LCDblinking = !LCDblinking;
 
 }
+
+
+void lcdStateMachine() {
+  switch (lcdState) {
+    case 0: // Waiting for pause time
+      if (hasTimePassed (LCDstartTime,  TITLE_RETAIN_TIME_MS)) {
+
+        printTitle(LCD_TITLE, sizeof(LCD_TITLE));
+
+        // set the display to automatically scroll:
+        lcd.setCursor(0, 1);
+
+        msgIndex = 0;
+        lcdState = 1;
+        typingState = 0;
+      }
+
+      break;
+    case 1: // Typing
+      switch (typingState) {
+        case 0: // Type a char
+          lcd.write(lcdMessage[msgIndex++]);
+          LCDstartTime = millis();
+          typingState = 1;
+          break;
+        case 1:   // Waiting for pause time
+          if (hasTimePassed (LCDstartTime,  TYPING_INTERVAL_MS)) {
+            if (msgIndex ==  COLS ) {
+              lcd.autoscroll();
+              lcd.leftToRight();
+            }
+            if (msgIndex < lcdMessageLen) typingState = 0;    //Keep typing
+            else {
+              lcdState = 0;    // Retype
+              LCDstartTime = millis();
+            }
+          }
+          break;
+      }
+
+      break;
+
+  }
+}
+
+
 

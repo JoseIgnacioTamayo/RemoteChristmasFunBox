@@ -7,15 +7,9 @@
     This project is about playing some Christmas music, making a servo-motor dance, and showing a message on the LCD Screen.
     All these functions controlled over TELNET
 
-    ## Project files and code ##
-
     The whole project uses state machines, there is no single delay() instruction to allow the program to run *parallel* tasks.
 
-     * ControlCristmas.c  >> Main program
-     * Music            >> In charge of playing the music, with a state machine
-    * songs.h          >> The songs are typed here, taking the notation found in  https://create.arduino.cc/projecthub/ianabcumming/musical-fairy-lights-ed1445?ref=tag&ref_id=christmas&offset=1
-
-  
+    ControlCristmas  >> Main program
 
 */
 
@@ -27,36 +21,28 @@
 #include "music.h"
 #include "lcd.h"
 
+// Macro to easily test for time delays
 // True if B milisecs have passed since A
 #define hasTimePassed(A,B)   (millis() - (A))>=(B)
 
 
-/* ---------- Variable to setup ------------- */
+/* ---------- Global Variables------------- */
 
-// Enter a MAC address for your controller below.
-// Newer Ethernet shields have a MAC address printed on a sticker on the shield
-byte mac[] = {
-  0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02
-};
-
-// Set the IP address of this Arduino
+byte mac[] = {  0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02 };
 IPAddress ip(192, 168, 1, 177);
-// Set the GW address of this Arduino
 IPAddress gw(192, 168, 1, 1);
-// Set the netmask of this Arduino
 IPAddress netmask(255, 255, 255, 128);
 
 #define TELNET_PORT    2222
 
-/*  --------- Circuit Pins Definitions --------
-
-     The Ethernet Shield already uses pins  10, 11, 12, 13 and 4
-*/
+/*  --------- Circuit Pins Definitions --------*/
 
 #define SPEAKER_PIN    3
 #define LED_PIN        2
 #define SERVO_PIN      8
+
 #define SDCARD_SS_PIN  4
+//The Ethernet Shield already uses pins  10, 11, 12, 13 and 4
 
 #define LED_R_PIN 5
 #define LED_G_PIN 6
@@ -70,16 +56,13 @@ IPAddress netmask(255, 255, 255, 128);
 #define LCD_RS_PIN      19
 
 
-/* ---------------------- */
 
 
-// Initialize the Ethernet server library
-// with the IP address and port you want to use
+/* --------- Initialize Hardware ------------- */
 EthernetServer server(TELNET_PORT);
 EthernetClient client;
-
-//Startup the display
 LiquidCrystal lcd(LCD_RS_PIN, LCD_EN_PIN, LCD_DATA3_PIN, LCD_DATA2_PIN, LCD_DATA1_PIN, LCD_DATA0_PIN);
+Servo servoMain;
 
 void setup() {
 
@@ -92,8 +75,6 @@ void setup() {
   digitalWrite(SDCARD_SS_PIN, HIGH);
 
   setupMusic();
-
-  //Setup the display
   setupLCD();
 
   //Setup the RGB LED strip pins
@@ -107,12 +88,14 @@ void setup() {
 
 }
 
+/* ---------- Local Functions ---------*/
 
+/* strcmpn
 
+    Compares 2 strins. Returns true if they are equal.
+    This compares up to n chars, or until one of the strings finishes with '\0'
 
-
-//Compares 2 strins. Returns true if they are equal.
-// This compares up to n chars, or until one of the strings finishes with '\0'
+*/
 boolean strcmpn(char* strA, char* strB, byte n) {
   byte index = 0;
   while ( (index < n) && (strA != '\0') && (strB != '\0') ) {
@@ -123,12 +106,11 @@ boolean strcmpn(char* strA, char* strB, byte n) {
 }
 
 /* printShow
- * Replies to the TELNET Client the status of the Cristmas variables
- * 
- */
-void printShow() {
 
-    
+   Replies to the TELNET Client the status of the Christmas variables
+
+*/
+void printShow() {
 
   client.print(" * Music = ");
   if (enableMusic) client.println( "YES" );
@@ -144,35 +126,35 @@ void printShow() {
 }
 
 /* doAction
- *  
- *  Gets the command text, just as input from the TELNET client.
- *  This is where the command is checked, and the actions taken.
- * 
- *  Input args is the input command, as read from TELNET session
- * 
- *  Returns 1 if an action was taken, and control continues.
- *  Returns 9 is byebye.
+
+    Gets the command text, just as input from the TELNET client.
+    This is where the command is checked, and the actions taken.
+
+    Input args is the input command, as read from TELNET session
+
+    Returns 1 if an action was taken, and control continues.
+    Returns 9 is byebye.
 */
 byte doAction(char* args) {
 
-    /* ---------- TELNET COMMANDS ------------- */
-    char DANCE_COMMAND[] = "dance";
-    char MUSIC_COMMAND[] = "music";
-    char FAST_COMMAND[] = "fast";
-    char MSG_COMMAND[] = "msg ";    //notice the 1 space after
-    char SING_COMMAND[] = "sing ";    //notice the 1 space after
-    char NO_COMMAND[] = "no ";    //notice the 1 space after
-    char BYE_COMMAND[] = "bye";
-    char SHOW_COMMAND[] = "show";
-    
+  /* ---------- TELNET COMMANDS ------------- */
+  char DANCE_COMMAND[] = "dance";
+  char MUSIC_COMMAND[] = "music";
+  char FAST_COMMAND[] = "fast";
+  char MSG_COMMAND[] = "msg ";    //notice the 1 space after
+  char SING_COMMAND[] = "sing ";    //notice the 1 space after
+  char NO_COMMAND[] = "no ";    //notice the 1 space after
+  char BYE_COMMAND[] = "bye";
+  char SHOW_COMMAND[] = "show";
+
   bool enableAction = true;  //By default, positive commands
   byte actionTaken = 0;      //By defaultm, no action was taken
 
   //Negative commands start by NO_COMMAND
   if  (  strcmpn(NO_COMMAND, args,  sizeof(NO_COMMAND) - 1) ) {
-    
+
     Serial.println("Found negative command");
-    
+
     // Shift the negative part of the commands
     args += sizeof(NO_COMMAND) - 1 ;
     enableAction = false;
@@ -222,22 +204,22 @@ byte doAction(char* args) {
     lcdReset();
   }
 
- // Sing command is only positive
+  // Sing command is only positive
   if ( (enableAction) && (strcmpn(SING_COMMAND, args , sizeof(SING_COMMAND)  - 1 )))     {
-   
+
     Serial.println("Sing command");
     args += sizeof(MSG_COMMAND) - 1 ;
     int songId = (*args) - '0';
-    if ((songId >= 1) && (songId <= numberOfSongs)){
+    if ((songId >= 1) && (songId <= numberOfSongs)) {
       musicReset();
-       currentSong = (byte*) songs[songId-1];
-       currentSongT = (byte) songsT[songId-1];
-       actionTaken = 1;
-       
+      currentSong = (byte*) songs[songId - 1];
+      currentSongT = (byte) songsT[songId - 1];
+      actionTaken = 1;
+
     }
-   
+
   }
-  
+
   return actionTaken;
 
 }
@@ -252,7 +234,7 @@ byte bufferPointer = 0;
 char bufferIn[TCP_BUFFER_SIZE];
 
 
-void telnetServer()
+void telnetStateMachine()
 {
   switch (connectionState) {
 
@@ -335,8 +317,6 @@ void telnetServer()
         }
       }
 
-
-
       break;
 
 
@@ -348,8 +328,21 @@ void telnetServer()
 
 
 void loop() {
-  telnetServer();
-  playMusic();
-  showLCD();
+  telnetStateMachine();
+  musicStateMachine();
+  lcdStateMachine();
 }
 
+/*
+ 
+Code released under MIT license
+
+Copyrigh 2017 Jose Ignacio Tamayo Segarra (jose.ignacio.tamayo@gmail.com)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+*/

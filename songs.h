@@ -1,22 +1,18 @@
 
+/*
 
+    This file has the songs.
 
-#define SECS_SILENCE_MS  3000
-#define ONE_SEC_MS  1000
+    The Structure is an array of 'Note Number , NoteLength'.
 
-#define TONE_LENGTH_MS         1400
-#define FAST_TONE_LENGTH_MS    1000
-#define SILENCE_AFTER_TONE_MS  50         // silence after each tone [ms]
-#define MAX_TWIST_DEGREES  60           // Max Degrees to turn at each dance twist
+*/
+
 
 #define MAX_NOTE_LENGTH  8
 
 
 // Note 1 is C3 at 440 Hz
 // https://pages.mtu.edu/~suits/notefreqs.html
-
-// The Structure is Note Number , NoteLength
-
 
 const byte jingleBells[] = {  // Jingle Bells Data   https://create.arduino.cc/projecthub/ianabcumming/musical-fairy-lights-ed1445?ref=tag&ref_id=christmas&offset=1
   29, 2, 29, 2, 29, 4, 29, 2, 29, 2, 29, 4, 29, 2, 32, 2, 25, 3, 27, 1, 29, 8, 30, 2, 30, 2,
