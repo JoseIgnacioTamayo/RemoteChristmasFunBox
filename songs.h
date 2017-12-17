@@ -8,28 +8,44 @@
 */
 
 
-#define MAX_NOTE_LENGTH  8
+#include "tones.h"
 
 
 // Note 1 is C3 at 440 Hz
 // https://pages.mtu.edu/~suits/notefreqs.html
 
-const byte jingleBells[] = {  // Jingle Bells Data   https://create.arduino.cc/projecthub/ianabcumming/musical-fairy-lights-ed1445?ref=tag&ref_id=christmas&offset=1
-  29, 2, 29, 2, 29, 4, 29, 2, 29, 2, 29, 4, 29, 2, 32, 2, 25, 3, 27, 1, 29, 8, 30, 2, 30, 2,
-  30, 3, 30, 1, 30, 2, 29, 2, 29, 2, 29, 1, 29, 1, 29, 2, 27, 2, 27, 2, 29, 2, 27, 4, 32, 4,
-  29, 2, 29, 2, 29, 4, 29, 2, 29, 2, 29, 4, 29, 2, 32, 2, 25, 3, 27, 1, 29, 8, 30, 2, 30, 2,
-  30, 2, 30, 2, 30, 2, 29, 2, 29, 2, 29, 1, 29, 1, 32, 2, 32, 2, 30, 2, 27, 2, 25, 8
-} ;
+//const int jingleBells[] = {  // Jingle Bells Data   https://create.arduino.cc/projecthub/ianabcumming/musical-fairy-lights-ed1445?ref=tag&ref_id=christmas&offset=1
+//  NOTE_F5, 2,   NOTE_F5, 2,   NOTE_F5, 4,  NOTE_F5, 2, NOTE_F5, 2, NOTE_F5, 4, 
+// NOTE_F5, 2, NOTE_GS5, 2, NOTE_CS5, 3, NOTE_DS5, 1, NOTE_F5, 8, NOTE_FS5, 2, NOTE_FS5, 2,
+//  NOTE_FS5, 3,  NOTE_FS5, 1,  NOTE_FS5, 2, NOTE_F5, 2, NOTE_F5, 2, NOTE_F5, 1, NOTE_F5, 1, NOTE_F5, 2,  NOTE_DS5, 2, NOTE_DS5, 2, NOTE_F5, 2, NOTE_DS5, 4, NOTE_GS5, 4,
+//  NOTE_F5, 2,   NOTE_F5, 2,   NOTE_F5, 4,  NOTE_F5, 2, NOTE_F5, 2, NOTE_F5, 4, NOTE_F5, 2, NOTE_GS5, 2, NOTE_CS5, 3, NOTE_DS5, 1, NOTE_F5, 8, NOTE_FS5, 2, NOTE_FS5, 2,
+//  NOTE_FS5, 2,  NOTE_FS5, 2,  NOTE_FS5, 2, NOTE_F5, 2, NOTE_F5, 2, NOTE_F5, 1, NOTE_F5, 1, NOTE_GS5, 2, NOTE_GS5, 2, NOTE_FS5, 2, NOTE_DS5, 2, NOTE_CS5, 8
+//} ;
+//
+//const int weWishYou[] = {  // We wish you a Merry Christmas https://www.8notes.com/scores/11826.asp
+//NOTE_D5, 4,   NOTE_G5, 4,   
+//NOTE_G5, 2,  NOTE_A5, 2, NOTE_G5, 2, NOTE_FS5, 2, 
+//NOTE_E5, 4, NOTE_C5, 4,NOTE_E5, 4, NOTE_A5, 4, 
+//NOTE_A5, 2, NOTE_B5, 2, NOTE_A5, 2,  NOTE_G5, 2, 
+//NOTE_FS5,2 , NOTE_D5, 4, NOTE_FS5, 4, NOTE_B5, 4, 
+//NOTE_B5, 2, NOTE_C6, 2, NOTE_B5, 2,  NOTE_A5, 2, 
+//NOTE_G5, 4, NOTE_E5, 4, NOTE_D5, 4, NOTE_E5, 4,
+//NOTE_A5, 4,   NOTE_FS5, 4,   NOTE_G5, 8
+//} ;
 
-const byte weWishYou[] = {  // We wish you a Merry Christmas https://www.8notes.com/scores/11826.asp
-  27, 4,  30, 4, 30, 2, 31, 2, 30, 2, 29, 2, 28, 4, 28, 4, 28, 4, 31, 4, 31, 2, 32, 2, 31, 2, 30, 2, 29, 4, 29, 4, 29, 4, 32, 4,
-  31, 2,  32, 2, 32, 2, 32, 2, 31, 4, 30, 4, 28, 2, 27, 2, 27, 2, 28, 4, 31, 4, 29, 4, 30, 8, 27, 4, 30, 4, 30, 4, 30, 4, 29, 8,
-  29, 4,  30, 4, 29, 4, 28, 4, 27, 8, 31, 4, 32, 4, 31, 2, 31, 2, 30, 2, 30, 2, 34, 4, 27, 4, 27, 2, 27, 2, 28, 4, 31, 4, 29, 4, 30, 8
-} ;
+
+const char jingleBells[] = ":d=4,o=5,b=170:b,b,b,p,b,b,b,p,b,d6,g.,8a,2b.,8p,c6,c6,c6,c6,c6,b,b,8b,8b,b,a,a,b,2a,2d6";
+
+const char weWishYou[] = ":d=8,o=5,b=140:4d,4g,g,a,g,f#,4e,4c,4e,4a,a,b,a,g,4f#,4d,4f#,4b,b,c6,b,a,4g,4e,4d,4e,4a,4f#,2g";
+
+const char on12days[] = ":d=8,o=5,b=150:d,d,4g,g,g,4g,g,g,a,b,c6,a,4b.,p,4d6,a,b,c6,a,d6,d6,a,b,c6,a,4d6,4e6,4d.6,p,d6,c6,b,a,4g,a,b,4c6,4e,4e,4d,g,a,b,c6,4b,4a,2g.";
+
+//const char star[] = ":d=8,o=5,b=160:16c.,16p,f,p,f,p,4f,4g,a,g,a,a#,c.6,16p,4a,4a#,a,16f.,g.,16p.,g,p,2f.,16c.,16p,f,p,f,p,4f,4g,a,g,a,a#,c.6,16p,4a,4a#,a,16f.,g.,16p,32p,g,p,2f.";
+
+const char santa[] = ":d=4,o=5,b=200:g,8e,8f,g,g.,8g,8a,8b,c6,2c6,8e,8f,g,g,g,8a,8g,f,f,e,g,c,e,d,2f,b4,1c,p,c6,d6,c6,b,c6,a,2a,c6,d6,c6,b,c6,2a.,d6,e6,d6,c#6,d6,b,b,b,8b,8c6,d6,c6,b,a,g,p,g.,8g,8e,8f,g,g.,8g,8a,8b,c6,2c6,8e,8f,g,g,g,8a,8g,8f,2f,e,g,c,e,d,2f,d6,1c6.";
+
+const char* songs[] = {jingleBells, weWishYou,on12days,santa};
 
 
-const byte* songs[] = {jingleBells, weWishYou};
-const byte songsT[] = {51, 54};
-
-const byte numberOfSongs = 2;
+const byte numberOfSongs = 4;
 

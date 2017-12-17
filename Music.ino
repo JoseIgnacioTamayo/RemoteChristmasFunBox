@@ -11,63 +11,202 @@
 
 /* ---------- Public Variables -----------*/
 bool enableDancing;
-bool enableMusic = true;
+bool enableMusic ;
+bool enableBlink;
 bool enableFast;
-byte* currentSong = (byte*) songs[0];
-byte currentSongT = (byte) songsT[0];
+
+char* currentSong = (char*) songs[0];
 
 /* ----- local Variables  ------ */
-float toneTime_Ms = TONE_LENGTH_MS;     // a note of length MAX_NOTE_LENGTH will play for toneTime_Ms time. Float to make divisions
+float maxToneTime_Ms = TONE_LENGTH_MS;     // 
+byte leds[N_LEDS] = {LED1_PIN, LED2_PIN, LED3_PIN};
+byte currentLed = 0;
 
-/* --------- Local Functions ---------- */
+int  defaultToneLen = 4;
+int  defaultScale = 5;
+int songIndex = 0;
 
-/*noteToHz
-
-   Convert a Note Nr. to Frequency
-   https://pages.mtu.edu/~suits/notefreqs.html
-
-   Input note is given in the interval [1,255], as read from the song text
-*/
-int noteToHz(int note) {                                 //
-  float freq = 440 * (pow(1.059463094359, (float) note - 21));    // -21 gives you note 1 at C3
-  return int(freq);                                       // Results are accurate to 1hz
-}
+/* ======================= Local Functions ============================ */
 
 /*lenghtToServoTwist
 
    Convert a note length to a proportinal degree value, for dancing twist
 
-   Input len is given in the interval [1,MAX_NOTE_LENGTH], as read from the song text
+   Input len represents the fraction of a complete tone, the fraction of a dancing twist
 
    If the calculated twist is less than 10 degrees, output is 0.
 */
 int lenghtToServoTwist(int len) {
-  float twist = MAX_TWIST_DEGREES * (float(len ) / MAX_NOTE_LENGTH);
+  float twist = float(MAX_TWIST_DEGREES)  / len ;
   return int((twist >= 10) ? twist : 0);
 }
+
+void offLED() {
+  digitalWrite(leds[currentLed], LOW);
+}
+
+void onNextLED() {
+  currentLed = (currentLed == (N_LEDS - 1) ) ? 0 : (currentLed + 1);
+  digitalWrite(leds[currentLed], HIGH);
+}
+
+
+char* initRTTTL(char* p) {
+
+  int num;
+  // format: d=N,o=N,b=NNN:
+  // find the start (skip name, etc)
+
+  while (*p != ':') p++;   // ignore name
+  p++;                     // skip ':'
+
+  // get default duration
+  if (*p == 'd')
+  {
+    p++; p++;              // skip "d="
+    num = 0;
+    while (isdigit(*p))
+    {
+      num = (num * 10) + (*p++ - '0');
+    }
+    if (num > 0) defaultToneLen = num;
+    p++;                   // skip comma
+  }
+
+
+  // get default octave
+  if (*p == 'o')
+  {
+    p++; p++;              // skip "o="
+    num = *p++ - '0';
+    if (num >= 3 && num <= 7) defaultScale = num;
+    p++;                   // skip comma
+  }
+
+  // get BPM
+  if (*p == 'b')
+  {
+    p++; p++;              // skip "b="
+    num = 0;
+    while (isdigit(*p))
+    {
+      num = (num * 10) + (*p++ - '0');
+    }
+    maxToneTime_Ms = (60 * 1000L / num) * 4;  // this is the time for whole note (in milliseconds)
+    p++;                   // skip colon
+  }
+
+  return p;
+
+}
+
+char* readRTTLNote(char* p, int* note, int* len_ms ) {
+  // first, get note duration, if available
+  int num = 0;
+  byte scale = 0;
+  while (isdigit(*p))
+  {
+    num = (num * 10) + (*p++ - '0');
+  }
+
+  if (num) *len_ms =  maxToneTime_Ms/num;
+  else *len_ms =  maxToneTime_Ms/defaultToneLen;  // we will need to check if we are a dotted note after
+
+  // now get the note
+
+  switch (*p)
+  {
+    case 'c':
+      num = 1;
+      break;
+    case 'd':
+      num = 3;
+      break;
+    case 'e':
+      num = 5;
+      break;
+    case 'f':
+      num = 6;
+      break;
+    case 'g':
+      num = 8;
+      break;
+    case 'a':
+      num = 10;
+      break;
+    case 'b':
+      num = 12;
+      break;
+    case 'p':
+    default:
+      num = 0;
+  }
+  p++;
+
+  // now, get optional '#' sharp
+  if (*p == '#')
+  {
+    num++;
+    p++;
+  }
+
+ 
+
+  // now, get optional '.' dotted note
+  if (*p == '.')
+  {
+    *len_ms += *len_ms / 2;
+    p++;
+  }
+
+  
+  // now, get scale
+  if (isdigit(*p))
+  {
+    scale = *p - '0';
+    p++;
+  }
+  else
+  {
+    scale = defaultScale;
+  }
+  
+   if (num) *note = notes[(scale - 4) * 12 + num];
+   else *note = 0;
+
+  if (*p == ',')
+    p++;       // skip comma for next note (or we may be at the end)
+
+  return p;
+
+}
+
+
+/* ============================================= */
+
 
 /* ----- State machine vars  ------ */
 byte musicState = 0, musicPlayState;
 unsigned long startTime;
-int t, note, toneLength, toneLength_ms, servoPos;
+int  toneLength_ms, servoPos;
 bool leftRight, blinking;
 
 void musicReset() {
   startTime = millis();
-  servoMain.write(90);
-  noTone(SPEAKER_PIN);
-  digitalWrite(LED_PIN, LOW);
-  musicState = 0;
 
+  noTone(SPEAKER_PIN);
+
+  musicState = 0;
+  offLED();
+  resetDancer();
 }
 
 
 void setupMusic() {
   pinMode(SPEAKER_PIN, OUTPUT); // Set buzzer
-  pinMode(LED_PIN, OUTPUT); // Set buzzer
-  servoMain.attach(SERVO_PIN); // Set servo
+  for (int i = 0; i < N_LEDS; i++)  pinMode(leds[i], OUTPUT);
   musicReset();
-
+  offDancer();
 }
 
 
@@ -76,10 +215,20 @@ void musicStateMachine() {
   switch (musicState) {
     case 0: // Waiting for Setup time
       if (hasTimePassed (startTime,  SECS_SILENCE_MS)) {
+      
+
+
+        // Load current song
+        if (songIndex >= (numberOfSongs ) ) songIndex = 0;
+        currentSong = (char*) songs[songIndex];
+        songIndex++;
+
+        currentSong = initRTTTL(currentSong);
+        if (enableFast) maxToneTime_Ms = (float)(maxToneTime_Ms)*0.8;
+        
         musicState = 1;
         musicPlayState = 0;
-        t = 0;
-        Serial.println("Music pause");
+        
       }
 
       break;
@@ -87,20 +236,22 @@ void musicStateMachine() {
 
       switch (musicPlayState) {
         case 0:
+          int  note, toneLength;
 
+         currentSong = readRTTLNote(currentSong, &note, &toneLength_ms);
 
-          note = noteToHz(currentSong[t * 2]);
-          toneLength = currentSong[(t * 2) + 1] ;
-          if ((toneLength < 1) || (toneLength > MAX_NOTE_LENGTH))  toneLength = MAX_NOTE_LENGTH;
-          toneLength_ms = (int)((toneLength * toneTime_Ms) / MAX_NOTE_LENGTH) ;
+         toneLength  = maxToneTime_Ms / toneLength_ms ;
 
           if (enableMusic) {
             // Play tone
-            tone(SPEAKER_PIN, note,  (toneLength_ms - SILENCE_AFTER_TONE_MS));
+            if (note) tone(SPEAKER_PIN, note,  (toneLength_ms - SILENCE_AFTER_TONE_MS));
 
           }
 
           if (enableDancing) {
+
+
+
             //Turn the servo
             servoPos += lenghtToServoTwist(toneLength) * (leftRight ? -1 : 1);
 
@@ -113,10 +264,19 @@ void musicStateMachine() {
             leftRight = !leftRight;
           }
 
+          if (enableBlink && (! enableDancing) && (lcdIsIdle())) {
+            lcdBackLight(blinking);
+            blinking = !blinking;
+          }
+
+          offLED();
+          onNextLED();
+
+
           startTime = millis();
           musicPlayState = 1;
-          digitalWrite(LED_PIN, (blinking) ? HIGH : LOW);  blinking = !blinking;
-          Serial.print("t");
+
+          //Serial.print("t");
 
           break;
         case 1:  // Wait Tone length
@@ -124,17 +284,18 @@ void musicStateMachine() {
           if (hasTimePassed (startTime, toneLength_ms)) {
 
             // Still notes to play, keep playing
-            if (t < (currentSongT - 1)) {
+            if (*currentSong) {
               musicPlayState = 0;
-              t++;
+     
             } else {
 
               // No more tones in song
               startTime = millis();
-              servoMain.write(90);
+
               noTone(SPEAKER_PIN);
               musicState = 0;
-              Serial.println("Silence after song");
+              offLED();
+              //Serial.println("Silence after song");
             }
           }
 
@@ -148,12 +309,19 @@ void musicStateMachine() {
   }
 }
 
-void setFastMode(bool enableAction) {
-  toneTime_Ms = enableAction ? FAST_TONE_LENGTH_MS : TONE_LENGTH_MS ;
-}
 
 void resetDancer() {
+  servoMain.attach(SERVO_PIN); // Set servo
   servoMain.write(90);
-
 }
+
+
+void offDancer() {
+  servoMain.write(90);
+  servoMain.detach();
+}
+
+
+
+
 
