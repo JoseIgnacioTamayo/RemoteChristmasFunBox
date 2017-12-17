@@ -10,28 +10,7 @@
 
 #include "tones.h"
 
-
-// Note 1 is C3 at 440 Hz
-// https://pages.mtu.edu/~suits/notefreqs.html
-
-//const int jingleBells[] = {  // Jingle Bells Data   https://create.arduino.cc/projecthub/ianabcumming/musical-fairy-lights-ed1445?ref=tag&ref_id=christmas&offset=1
-//  NOTE_F5, 2,   NOTE_F5, 2,   NOTE_F5, 4,  NOTE_F5, 2, NOTE_F5, 2, NOTE_F5, 4, 
-// NOTE_F5, 2, NOTE_GS5, 2, NOTE_CS5, 3, NOTE_DS5, 1, NOTE_F5, 8, NOTE_FS5, 2, NOTE_FS5, 2,
-//  NOTE_FS5, 3,  NOTE_FS5, 1,  NOTE_FS5, 2, NOTE_F5, 2, NOTE_F5, 2, NOTE_F5, 1, NOTE_F5, 1, NOTE_F5, 2,  NOTE_DS5, 2, NOTE_DS5, 2, NOTE_F5, 2, NOTE_DS5, 4, NOTE_GS5, 4,
-//  NOTE_F5, 2,   NOTE_F5, 2,   NOTE_F5, 4,  NOTE_F5, 2, NOTE_F5, 2, NOTE_F5, 4, NOTE_F5, 2, NOTE_GS5, 2, NOTE_CS5, 3, NOTE_DS5, 1, NOTE_F5, 8, NOTE_FS5, 2, NOTE_FS5, 2,
-//  NOTE_FS5, 2,  NOTE_FS5, 2,  NOTE_FS5, 2, NOTE_F5, 2, NOTE_F5, 2, NOTE_F5, 1, NOTE_F5, 1, NOTE_GS5, 2, NOTE_GS5, 2, NOTE_FS5, 2, NOTE_DS5, 2, NOTE_CS5, 8
-//} ;
-//
-//const int weWishYou[] = {  // We wish you a Merry Christmas https://www.8notes.com/scores/11826.asp
-//NOTE_D5, 4,   NOTE_G5, 4,   
-//NOTE_G5, 2,  NOTE_A5, 2, NOTE_G5, 2, NOTE_FS5, 2, 
-//NOTE_E5, 4, NOTE_C5, 4,NOTE_E5, 4, NOTE_A5, 4, 
-//NOTE_A5, 2, NOTE_B5, 2, NOTE_A5, 2,  NOTE_G5, 2, 
-//NOTE_FS5,2 , NOTE_D5, 4, NOTE_FS5, 4, NOTE_B5, 4, 
-//NOTE_B5, 2, NOTE_C6, 2, NOTE_B5, 2,  NOTE_A5, 2, 
-//NOTE_G5, 4, NOTE_E5, 4, NOTE_D5, 4, NOTE_E5, 4,
-//NOTE_A5, 4,   NOTE_FS5, 4,   NOTE_G5, 8
-//} ;
+//http://mines.lumpylumpy.com/Electronics/Computers/Software/Cpp/MFC/RingTones.RTTTL
 
 
 const char jingleBells[] = ":d=4,o=5,b=170:b,b,b,p,b,b,b,p,b,d6,g.,8a,2b.,8p,c6,c6,c6,c6,c6,b,b,8b,8b,b,a,a,b,2a,2d6";
