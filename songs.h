@@ -1,17 +1,14 @@
 
 /*
 
-    This file has the songs.
+    This file has the songs in RTTL format
 
-    The Structure is an array of 'Note Number , NoteLength'.
+    http://mines.lumpylumpy.com/Electronics/Computers/Software/Cpp/MFC/RingTones.RTTTL
 
 */
 
 
 #include "tones.h"
-
-//http://mines.lumpylumpy.com/Electronics/Computers/Software/Cpp/MFC/RingTones.RTTTL
-
 
 const char jingleBells[] = ":d=4,o=5,b=170:b,b,b,p,b,b,b,p,b,d6,g.,8a,2b.,8p,c6,c6,c6,c6,c6,b,b,8b,8b,b,a,a,b,2a,2d6";
 
@@ -24,7 +21,6 @@ const char on12days[] = ":d=8,o=5,b=150:d,d,4g,g,g,4g,g,g,a,b,c6,a,4b.,p,4d6,a,b
 const char santa[] = ":d=4,o=5,b=200:g,8e,8f,g,g.,8g,8a,8b,c6,2c6,8e,8f,g,g,g,8a,8g,f,f,e,g,c,e,d,2f,b4,1c,p,c6,d6,c6,b,c6,a,2a,c6,d6,c6,b,c6,2a.,d6,e6,d6,c#6,d6,b,b,b,8b,8c6,d6,c6,b,a,g,p,g.,8g,8e,8f,g,g.,8g,8a,8b,c6,2c6,8e,8f,g,g,g,8a,8g,8f,2f,e,g,c,e,d,2f,d6,1c6.";
 
 const char* songs[] = {jingleBells, weWishYou,on12days,santa};
-
 
 const byte numberOfSongs = 4;
 

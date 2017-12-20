@@ -1,15 +1,14 @@
 /*
 
-    Telnet to the Arduino to command Christmas
+    Telnet to the Arduino to command ChristmasBox
 
-    Based on several online projects and examples, where some code was taken (thanks you all for sharing your knowledge, experience and code).
+    Based on several online projects and examples, from where some code was taken (thanks you all for sharing your knowledge, experience and code).
 
     This project is about playing some Christmas music, making a servo-motor dance, and showing a message on the LCD Screen.
     All these functions controlled over TELNET
 
     The whole project uses state machines, there is no single delay() instruction to allow the program to run *parallel* tasks.
-
-    ControlCristmas  >> Main program
+    >> Well, the libraries used have some small delays, but as the state machines work at the milisecond level, there is the appeareance of parallelism.
 
 */
 
@@ -17,23 +16,16 @@
 #include <Servo.h>
 #include <LiquidCrystal.h>
 
-
-#include "banner.h"
+#include "telnet.h"
 #include "music.h"
 #include "lcd.h"
 
-// Macro to easily test for time delays
-// True if B milisecs have passed since A
-#define hasTimePassed(A,B)   (millis() - (A))>=(B)
-
 
 /* ---------- Global Variables------------- */
-
 byte mac[] = {  0x00, 0xAA, 0xBB, 0xCC, 0xDE, 0x02 };
-IPAddress ip(192, 168, 1, 177);
-IPAddress gw(192, 168, 1, 1);
-IPAddress netmask(255, 255, 255, 128);
-
+IPAddress ip(172, 20, 1, 111);
+IPAddress gw(172, 20, 1, 1);
+IPAddress netmask(255, 255, 255, 0);
 #define TELNET_PORT    2222
 
 /*  --------- Circuit Pins Definitions --------*/
@@ -49,10 +41,10 @@ IPAddress netmask(255, 255, 255, 128);
 #define SDCARD_SS_PIN  4
 //The Ethernet Shield already uses pins  10, 11, 12, 13 and 4
 
-#define LCD_DATA0_PIN   14
-#define LCD_DATA1_PIN   15
-#define LCD_DATA2_PIN   16
-#define LCD_DATA3_PIN   17
+#define LCD_DATA7_PIN   14
+#define LCD_DATA6_PIN   15
+#define LCD_DATA5_PIN   16
+#define LCD_DATA4_PIN   17
 #define LCD_EN_PIN      18
 #define LCD_RS_PIN      19
 #define LCD_BACKLIGHT_PIN      9
@@ -62,33 +54,14 @@ IPAddress netmask(255, 255, 255, 128);
 EthernetServer server(TELNET_PORT);
 EthernetClient client;
 
-Servo servoMain;
-
-void setup() {
-
-  // start the Ethernet connection:
-  Ethernet.begin(mac, ip, gw, netmask) ;
-  server.begin();
-
-  //Avoid the SD Card reader
-  pinMode(SDCARD_SS_PIN, OUTPUT);
-  digitalWrite(SDCARD_SS_PIN, HIGH);
-
-  setupMusic();
-  setupLCD();
-
-  //Setup the RGB LED strip pins
-
-  //  // Open serial communications and wait for port to open:
-  //  Serial.begin(9600);
-  //  while (!Serial) ;   // wait for serial port to connect. Needed for native USB port only
-  //
-  //  Serial.print("Control Christmas address:");
-  //  Serial.println(Ethernet.localIP());
-
-}
 
 /* ---------- Local Functions ---------*/
+
+/* hasTimePassed()
+ *  Macro to easily test for time delays
+ *  True if B milisecs have passed since A, where A is the result of millis() called previously
+*/
+#define hasTimePassed(A,B)   (millis() - (A))>=(B)
 
 /* strcmpn
 
@@ -153,15 +126,11 @@ byte doAction(char* args) {
 
   //Negative commands start by NO_COMMAND
   if  (  strcmpn(NO_COMMAND, args,  sizeof(NO_COMMAND) - 1) ) {
-
     ////Serial.println("Found negative command");
-
     // Shift the negative part of the commands
     args += sizeof(NO_COMMAND) - 1 ;
     enableAction = false;
-
   }
-
   // Set the enable actions
   if (strcmpn(DANCE_COMMAND, args, sizeof(DANCE_COMMAND) - 1 ))     {
     enableDancing = enableAction ;
@@ -211,11 +180,8 @@ byte doAction(char* args) {
     byte i;
     ////Serial.println("Msg command");
     args += sizeof(MSG_COMMAND) - 1 ;
-    startMesage(args);
+    if (lcdIsIdle()) startMesage(args);
     actionTaken = 1;
-
-
-
   }
 
   return actionTaken;
@@ -223,10 +189,8 @@ byte doAction(char* args) {
 }
 
 
-
-
 /* ---------- TELNET State machine ------------- */
-#define TCP_BUFFER_SIZE  100
+#define TCP_BUFFER_SIZE  50
 byte connectionState = 0;
 byte bufferPointer = 0;
 char bufferIn[TCP_BUFFER_SIZE];
@@ -244,18 +208,11 @@ void telnetStateMachine()
         client.flush();
         //Serial.println("We have a new client");
 
-        // Read whatever comes in the connection
-//        while (client.available()) {
-//          client.read();
-//        }
-        // Done reading the initial data, which is ignored
         client.println(BANNER);
         client.print(PROMPT);
         //Serial.println("Say Hello, expect command");
 
         connectionState = 2;
-
-
 
       }
       break;
@@ -279,13 +236,14 @@ void telnetStateMachine()
       break;
 
     case 3: // Reading the data from the client, interpreting and doing
+      char c ;
       if (client.available() && (bufferPointer < (TCP_BUFFER_SIZE - 1 )) ) {
-        char c  = client.read();
+        c  = client.read();
         bufferIn[bufferPointer++] = c;
         //Serial.print(c);
-      } else {
-
-        // Done reading into buffer
+      } 
+      
+      if (c == '\n'){     // Done reading into buffer
 
         //Serial.println("\nReceived command");
         switch ( doAction(bufferIn) ) {
@@ -324,6 +282,26 @@ void telnetStateMachine()
 }
 
 
+void setup() {
+
+  // start the Ethernet connection:
+  Ethernet.begin(mac, ip, gw, netmask) ;
+  server.begin();
+
+  //Avoid the SD Card reader
+  pinMode(SDCARD_SS_PIN, OUTPUT);
+  digitalWrite(SDCARD_SS_PIN, HIGH);
+
+  setupMusic();
+  setupLCD();
+
+  // Open serial communications and wait for port to open:
+  // Serial.begin(9600);
+  //while (!Serial) ;   // wait for serial port to connect. Needed for native USB port only
+  // Serial.print("Control Christmas address:");
+  // Serial.println(Ethernet.localIP());
+
+}
 
 void loop() {
   telnetStateMachine();
@@ -335,7 +313,7 @@ void loop() {
 
   Code released under MIT license
 
-  Copyrigh 2017 Jose Ignacio Tamayo Segarra (jose.ignacio.tamayo@gmail.com)
+  Copyrigh 2017 Jose Ignacio Tamayo Segarra (jose.ignacio.tamayo@gmail.com) and Victor Boglea (bvictor@viking-tech.ro)
 
   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
